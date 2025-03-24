@@ -57,9 +57,6 @@ python denklem_main.py
 - Sanal ortam kullanın
 - Gerekirse `pip install --upgrade pip` ile pip'i güncelleyin
 
-## 🤝 Katkıda Bulunma
-Hata bildirimleri ve pull request'ler memnuniyetle karşılanır!
-
 ### Hata Bildirimi
 Herhangi bir sorunla karşılaşırsanız lütfen [Issues](../../issues) sayfasından bildiriniz.
 
