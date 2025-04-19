@@ -26,6 +26,7 @@ python -m venv venv
 
 # Bağımlılıkları yükleme
 pip install PyQt6
+pip install numpy
 ```
 
 #### Linux / macOS
@@ -35,11 +36,13 @@ source venv/bin/activate
 
 # Bağımlılıkları yükleme
 pip install PyQt6
+pip install numpy
 ```
 
 ### Doğrudan Sistem Python'una Kurulum
 ```bash
 pip install PyQt6
+pip install numpy
 ```
 
 ## 🚀 Çalıştırma
