@@ -1,4 +1,5 @@
 import math
+import numpy as np
 
 # Matematiksel fonksiyonları içeren sınıf
 class Fonksiyonlar:
@@ -90,6 +91,58 @@ class SekantYontemi:
         return x2
 
 
+# Gauss Eliminasyon (Yok Etme) Yöntemi
+class GaussYokEtmeYontemi:
+    @staticmethod
+    def coz(katsayilar, sonuclar):
+        n = len(sonuclar)
+        genisletilmis_matris = np.zeros((n, n+1))
+        
+        # Genişletilmiş matris (Ax = b) oluştur
+        for i in range(n):
+            for j in range(n):
+                genisletilmis_matris[i, j] = katsayilar[i][j]
+            genisletilmis_matris[i, n] = sonuclar[i]
+        
+        # İleri Yok Etme
+        iterasyon_degerleri = []
+        for k in range(n):
+            # En büyük mutlak değere sahip satırı bul (pivotlama)
+            en_buyuk_satir = k
+            for i in range(k+1, n):
+                if abs(genisletilmis_matris[i, k]) > abs(genisletilmis_matris[en_buyuk_satir, k]):
+                    en_buyuk_satir = i
+            
+            # Satırları değiştir
+            if en_buyuk_satir != k:
+                for j in range(n+1):
+                    genisletilmis_matris[k, j], genisletilmis_matris[en_buyuk_satir, j] = genisletilmis_matris[en_buyuk_satir, j], genisletilmis_matris[k, j]
+            
+            # Alt satırları yok et
+            for i in range(k+1, n):
+                if genisletilmis_matris[k, k] == 0:
+                    continue  # Sıfıra bölünmeyi önle
+                katsayi = genisletilmis_matris[i, k] / genisletilmis_matris[k, k]
+                for j in range(k, n+1):
+                    genisletilmis_matris[i, j] -= katsayi * genisletilmis_matris[k, j]
+            
+            # İterasyon verilerini sakla
+            iterasyon = genisletilmis_matris.copy()
+            iterasyon_degerleri.append(iterasyon)
+        
+        # Geri Yerine Koyma
+        cozum = np.zeros(n)
+        for i in range(n-1, -1, -1):
+            cozum[i] = genisletilmis_matris[i, n]
+            for j in range(i+1, n):
+                cozum[i] -= genisletilmis_matris[i, j] * cozum[j]
+            if genisletilmis_matris[i, i] == 0:
+                raise Exception("Sıfıra bölme hatası: Tekil matris")
+            cozum[i] /= genisletilmis_matris[i, i]
+        
+        return cozum, iterasyon_degerleri
+
+
 # Ana program
 if __name__ == "__main__":
     try:
@@ -99,5 +152,18 @@ if __name__ == "__main__":
         print("Aralık Yarılama:", AralikYarilamaYontemi.AralikYarilama(1, 2))
         print("Newton Raphson:", NewtonRaphsonYontemi.NewtonRaphson(1.5))
         print("Sekant Yöntemi:", SekantYontemi.Sekant(1, 2))
+        
+        # Gauss Eliminasyon için test
+        katsayilar = [
+            [2, 1, -1, 2],
+            [-3, -1, 2, -11],
+            [-2, 1, 2, -3],
+            [1, 2, 3, 4]
+        ]
+        sonuclar = [8, -15, -3, 10]
+        
+        cozum, iterasyonlar = GaussYokEtmeYontemi.coz(katsayilar, sonuclar)
+        print("Gauss Eliminasyon Çözümü:", cozum)
+        
     except Exception as e:
         print("Hata:", str(e))

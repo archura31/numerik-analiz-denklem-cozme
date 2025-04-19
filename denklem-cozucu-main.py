@@ -1,11 +1,13 @@
 import sys
-from PyQt6.QtWidgets import QMainWindow, QApplication
+import numpy as np
+from PyQt6.QtWidgets import QMainWindow, QApplication, QInputDialog, QMessageBox
 from denklem_ui import Ui_MainWindow
 from denklem import (
     Fonksiyonlar, 
     AralikYarilamaYontemi, 
     NewtonRaphsonYontemi, 
-    SekantYontemi
+    SekantYontemi,
+    GaussYokEtmeYontemi
 )
 
 class Fonksiyonlar_Genisletilmis:
@@ -32,7 +34,24 @@ class DenklemCozucuUygulama(QMainWindow, Ui_MainWindow):
         
         # Buton event'ini bağla
         self.sonucButton.clicked.connect(self.denklem_coz)
-
+        
+        # Varsayılan denklem sistemleri
+        self.varsayilan_denklem_sistemi_4x4 = [
+            [2, 1, -1, 2],
+            [-3, -1, 2, -11],
+            [-2, 1, 2, -3],
+            [1, 2, 3, 4]
+        ]
+        self.varsayilan_sonuclar_4x4 = [8, -15, -3, 10]
+        
+        # Kullanıcının metod seçimine göre UI güncellemeleri
+        self.denklemBox.currentIndexChanged.connect(self.ui_guncelle)
+        
+    def ui_guncelle(self):
+        # Eğer lineer denklem sistemi seçildiyse, sadece Gauss yöntemini göster
+        if self.denklemBox.currentIndex() == 3:  # Lineer Denklem Sistemi
+            self.metodBox.setCurrentIndex(3)  # Gauss Eliminasyon
+            
     def denklem_coz(self):
         # Seçilen denklemi ve metodu al
         denklem_index = self.denklemBox.currentIndex()
@@ -40,6 +59,16 @@ class DenklemCozucuUygulama(QMainWindow, Ui_MainWindow):
 
         # Liste widget'ını temizle
         self.listWidget.clear()
+        
+        # Lineer denklem sistemi ve Gauss seçildi
+        if denklem_index == 3 and metod_index == 3:  # Lineer Denklem Sistemi ve Gauss Eliminasyon
+            self.gauss_cozum()
+            return
+            
+        # Eğer Gauss seçilmişse ama denklem sistemi seçilmemişse uyarı ver
+        if metod_index == 3 and denklem_index != 3:
+            QMessageBox.warning(self, "Uyarı", "Gauss Eliminasyon yöntemi sadece lineer denklem sistemleri için kullanılabilir!")
+            return
 
         try:
             sonuc = None
@@ -188,6 +217,109 @@ class DenklemCozucuUygulama(QMainWindow, Ui_MainWindow):
             sonuc = custom_sekant(x0, x1)
             self.sonucLabel.setText(f"Sonuc: {sonuc}")
 
+        except Exception as e:
+            self.listWidget.addItem(f"Hata: {str(e)}")
+            
+    def gauss_cozum(self):
+        """Gauss Eliminasyon yöntemi ile lineer denklem sistemini çöz"""
+        try:
+            # Varsayılan değerler
+            katsayilar = self.varsayilan_denklem_sistemi_4x4
+            sonuclar = self.varsayilan_sonuclar_4x4
+            
+            # Kullanıcıya seçenek sun
+            boyut, ok = QInputDialog.getItem(
+                self, 
+                "Denklem Sistemi Boyutu",
+                "Hangi boyutta denklem sistemi çözmek istersiniz?",
+                ["4x4 (varsayılan)", "3x3 (kullanıcı girişi)", "10x10 (rastgele)"],
+                0, False
+            )
+            
+            if ok:
+                if boyut == "4x4 (varsayılan)":
+                    # Varsayılan 4x4 kullan
+                    pass
+                    
+                elif boyut == "3x3 (kullanıcı girişi)":
+                    # Kullanıcıdan 3x3 matris ve sonuç vektörü al
+                    katsayilar = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
+                    sonuclar = [0, 0, 0]
+                    
+                    for i in range(3):
+                        for j in range(3):
+                            deger, ok = QInputDialog.getDouble(
+                                self, 
+                                f"Matris Değeri [A{i+1},{j+1}]", 
+                                f"A[{i+1},{j+1}] değerini girin:", 
+                                1.0, -1000.0, 1000.0, 2
+                            )
+                            if ok:
+                                katsayilar[i][j] = deger
+                            else:
+                                return
+                                
+                    for i in range(3):
+                        deger, ok = QInputDialog.getDouble(
+                            self, 
+                            f"Sonuç Vektörü [b{i+1}]", 
+                            f"b[{i+1}] değerini girin:", 
+                            1.0, -1000.0, 1000.0, 2
+                        )
+                        if ok:
+                            sonuclar[i] = deger
+                        else:
+                            return
+                
+                elif boyut == "10x10 (rastgele)":
+                    # 10x10 rastgele matris oluştur
+                    import random
+                    katsayilar = []
+                    sonuclar = []
+                    for i in range(10):
+                        satir = []
+                        for j in range(10):
+                            satir.append(random.randint(1, 10))
+                        katsayilar.append(satir)
+                        sonuclar.append(random.randint(1, 20))
+            
+            # Matris ve sonuç vektörünü göster
+            self.listWidget.addItem("Katsayı Matrisi ve Sonuç Vektörü:")
+            n = len(sonuclar)
+            for i in range(n):
+                satir_str = "| "
+                for j in range(n):
+                    satir_str += f"{katsayilar[i][j]:6.2f} "
+                satir_str += f"| = {sonuclar[i]:6.2f}"
+                self.listWidget.addItem(satir_str)
+            
+            # Gauss Eliminasyon çözümü
+            cozum, iterasyonlar = GaussYokEtmeYontemi.coz(katsayilar, sonuclar)
+            
+            # İterasyonları göster
+            self.listWidget.addItem("\nİterasyon Adımları:")
+            for i, matris in enumerate(iterasyonlar):
+                self.listWidget.addItem(f"Adım {i+1}:")
+                n = matris.shape[0]
+                for j in range(n):
+                    satir_str = "| "
+                    for k in range(n+1):
+                        if k == n:
+                            satir_str += f"| {matris[j, k]:6.2f}"
+                        else:
+                            satir_str += f"{matris[j, k]:6.2f} "
+                    self.listWidget.addItem(satir_str)
+
+            # Sonuçları göster
+            self.listWidget.addItem("\nÇözüm:")
+            sonuc_str = "["
+            for i in range(len(cozum)):
+                sonuc_str += f"x{i+1} = {cozum[i]:.4f}"
+                if i < len(cozum) - 1:
+                    sonuc_str += ", "
+            sonuc_str += "]"
+            self.sonucLabel.setText(f"Sonuc: {sonuc_str}")
+            
         except Exception as e:
             self.listWidget.addItem(f"Hata: {str(e)}")
 
