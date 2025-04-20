@@ -310,11 +310,17 @@ class DenklemCozucuUygulama(QMainWindow, Ui_MainWindow):
                             satir_str += f"{matris[j, k]:6.2f} "
                     self.listWidget.addItem(satir_str)
 
-            # Sonuçları göster
+            # Sonuçları göster - BU KISIMDA DEĞİŞİKLİK YAPILDI
             self.listWidget.addItem("\nÇözüm:")
+            
+            # Her değişkenin değerini ayrı liste öğesi olarak listele
+            for i in range(len(cozum)):
+                self.listWidget.addItem(f"x{i+1} = {cozum[i]:.4f}")
+            
+            # Sonuç etiketini daha kısa ve özlü tut
             sonuc_str = "["
             for i in range(len(cozum)):
-                sonuc_str += f"x{i+1} = {cozum[i]:.4f}"
+                sonuc_str += f"x{i+1}={cozum[i]:.2f}"
                 if i < len(cozum) - 1:
                     sonuc_str += ", "
             sonuc_str += "]"
