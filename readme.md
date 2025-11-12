@@ -64,7 +64,7 @@ python denklem_main.py
 Herhangi bir sorunla karşılaşırsanız lütfen [Issues](../../issues) sayfasından bildiriniz.
 
 ## 📝 Lisans
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
 
 ---
 
